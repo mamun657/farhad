@@ -1,0 +1,70 @@
+// Use this file if deploying the backend separately from the frontend
+// Rename to server.js and update render.yaml to use: startCommand: node server.js
+// This version does NOT serve the frontend - that's hosted separately
+
+import 'dotenv/config'
+import express from 'express'
+import { handleChatRequest } from './src/chatbot/chatHandler.js'
+
+const app = express()
+const PORT = globalThis.process.env.PORT || 3000
+const configuredFrontendOrigins = (globalThis.process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean)
+
+const allowedOrigins = new Set([
+  ...configuredFrontendOrigins,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://farhad-global-trade.onrender.com',
+])
+
+app.disable('x-powered-by')
+
+// CORS middleware
+app.use((request, response, next) => {
+  const origin = request.headers.origin
+  if (!origin || !allowedOrigins.has(origin)) return next()
+
+  response.setHeader('Access-Control-Allow-Origin', origin)
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  response.setHeader('Vary', 'Origin')
+  if (request.method === 'OPTIONS') return response.sendStatus(204)
+  return next()
+})
+
+app.use(express.json({ limit: '32kb' }))
+
+// API endpoints
+app.get('/api/health', (_request, response) => {
+  response.json({ 
+    ok: true, 
+    service: 'farhad-global-trade-api', 
+    groqConfigured: Boolean(globalThis.process.env.GROQ_API_KEY),
+    environment: globalThis.process.env.NODE_ENV || 'unknown'
+  })
+})
+
+app.post('/api/chat', handleChatRequest)
+
+// Error handling
+app.use((error, _request, response, next) => {
+  console.error('Request handling error:', error.message)
+  if (response.headersSent) return next(error)
+  if (error instanceof SyntaxError && error.status === 400 && error.type === 'entity.parse.failed') {
+    return response.status(400).json({ success: false, error: 'Please send a valid message.' })
+  }
+  return response.status(500).json({ success: false, error: 'Sorry, I\'m having trouble connecting right now. Please try again in a moment.' })
+})
+
+// 404 handler
+app.use((_request, response) => {
+  response.status(404).json({ error: 'API endpoint not found' })
+})
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Farhad Global Trade API listening on port ${PORT}`)
+  console.log(`Environment: ${globalThis.process.env.NODE_ENV || 'development'}`)
+})

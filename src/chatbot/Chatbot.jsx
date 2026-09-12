@@ -60,6 +60,12 @@ function Chatbot() {
   const apiBaseUrl = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '')).trim().replace(/\/+$/, '')
   const requestTimeoutMs = 14_000
 
+  // Validate API URL configuration in production
+  const getApiUrl = () => {
+    const url = apiBaseUrl || (typeof window !== 'undefined' && window.location.origin ? window.location.origin : '')
+    return url ? `${url}/api/chat` : null
+  }
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [messages, isLoading])
@@ -89,8 +95,19 @@ function Chatbot() {
     const controller = new AbortController()
     const timeoutId = window.setTimeout(() => controller.abort(), requestTimeoutMs)
 
+    const chatApiUrl = getApiUrl()
+    if (!chatApiUrl) {
+      setMessages((current) => [...current, {
+        id: `${requestId}-error`,
+        role: 'assistant',
+        content: 'The chat service is not properly configured. Please reload the page and try again.',
+      }])
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const response = await fetch(`${apiBaseUrl}/api/chat`, {
+      const response = await fetch(chatApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,

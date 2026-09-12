@@ -5,6 +5,7 @@ services:
     plan: free
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
+    # Force redeploy: 2026-09-13 - Ensure vite is installed during build
     envVars:
       - key: NODE_ENV
         value: production

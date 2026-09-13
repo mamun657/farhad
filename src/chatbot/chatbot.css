@@ -191,7 +191,7 @@
   padding: 15px;
 }
 
-.chatbot-thinking span {
+.chatbot-thinking > span:not(.chatbot-connecting) {
   width: 5px;
   height: 5px;
   background: #8a6d3d;
@@ -199,8 +199,17 @@
   animation: chatbot-blink 1s infinite ease-in-out;
 }
 
-.chatbot-thinking span:nth-child(2) { animation-delay: 0.14s; }
-.chatbot-thinking span:nth-child(3) { animation-delay: 0.28s; }
+.chatbot-connecting {
+  width: auto !important;
+  height: auto !important;
+  margin-right: 3px;
+  color: #536054;
+  font-size: 0.72rem;
+  animation: none !important;
+}
+
+.chatbot-thinking > span:nth-child(2) { animation-delay: 0.14s; }
+.chatbot-thinking > span:nth-child(3) { animation-delay: 0.28s; }
 
 .chatbot-input-area {
   display: flex;

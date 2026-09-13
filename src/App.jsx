@@ -1,7 +1,9 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import Chatbot from './chatbot/Chatbot'
+import HeroVideoPreloader from './components/HeroVideoPreloader'
 import partnerImage from './assets/partner.png'
+import heroVideoSource from '../video/Fa vid.mp4'
 
 const navItems = [
   { label: 'Home', href: '#home' },
@@ -140,6 +142,7 @@ function App() {
   const [inquirySent, setInquirySent] = useState(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
+  const [heroIntroComplete, setHeroIntroComplete] = useState(false)
   const [activeCredential, setActiveCredential] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -176,14 +179,19 @@ function App() {
   }, [])
 
   useEffect(() => {
+    const introTimer = window.setTimeout(() => setHeroIntroComplete(true), 3500)
+    return () => window.clearTimeout(introTimer)
+  }, [])
+
+  useEffect(() => {
     const heroSection = document.querySelector('.hero-video-section')
     if (!heroSection) return
-    if (videoReady) {
+    if (heroIntroComplete && videoReady) {
       heroSection.classList.add('is-video-visible')
       return
     }
     heroSection.classList.remove('is-video-visible')
-  }, [videoReady])
+  }, [heroIntroComplete, videoReady])
 
   useEffect(() => {
     const video = videoRef.current
@@ -208,10 +216,6 @@ function App() {
       setVideoPlaying(false)
     }
 
-    const handleWaiting = () => {
-      setVideoReady(false)
-    }
-
     const handleError = () => {
       console.error('[Hero video] Failed to load or play the Farhad hero video.')
       setVideoReady(false)
@@ -231,7 +235,6 @@ function App() {
     video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('playing', handlePlaying)
     video.addEventListener('pause', handlePause)
-    video.addEventListener('waiting', handleWaiting)
     video.addEventListener('error', handleError)
 
     tryPlayback()
@@ -240,7 +243,6 @@ function App() {
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('playing', handlePlaying)
       video.removeEventListener('pause', handlePause)
-      video.removeEventListener('waiting', handleWaiting)
       video.removeEventListener('error', handleError)
     }
   }, [])
@@ -367,6 +369,7 @@ function App() {
       </header>
 
       <main>
+        <HeroVideoPreloader visible={!heroIntroComplete || !videoReady} />
         <section className="hero-video-section" id="home">
           <div className="hero-video-stage">
             <div className="hero-video-shell">
@@ -377,13 +380,12 @@ function App() {
                 muted
                 loop
                 playsInline
-                preload="metadata"
-                poster="/media/farhad-global-trade-hero-poster.jpg"
+                preload="auto"
                 aria-label="Farhad Global Trade sourcing and supply video"
                 onPlay={() => setVideoPlaying(true)}
                 onPause={() => setVideoPlaying(false)}
               >
-                <source src="/media/farhad-global-trade-hero.mp4" type="video/mp4" />
+                <source src={heroVideoSource} type="video/mp4" />
               </video>
               <div className="hero-video-overlay" />
               <div className="video-status">

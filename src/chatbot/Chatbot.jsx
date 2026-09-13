@@ -31,6 +31,8 @@ const navigationTargets = {
   officeHours: businessKnowledge.sections.OfficeHours,
 }
 
+const productionApiUrl = 'https://farhadglobaltrade.onrender.com'
+
 function getNavigationAction(question, answer) {
   const text = `${question} ${answer}`.toLowerCase()
   if (isOpeningStatusQuestion(question)) return { label: navigationLabels.officeHours, href: navigationTargets.officeHours }
@@ -81,12 +83,13 @@ function Chatbot() {
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
   const [showQuickReplies, setShowQuickReplies] = useState(true)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const messageIdRef = useRef(0)
   const apiBaseUrl = (
-    import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '')
+    import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : productionApiUrl)
   ).trim().replace(/\/+$/, '')
   const requestTimeoutMs = 30_000
 
@@ -126,15 +129,17 @@ function Chatbot() {
 
     const controller = new AbortController()
     const timeoutId = window.setTimeout(() => controller.abort(), requestTimeoutMs)
+    const connectingTimeoutId = window.setTimeout(() => setIsConnecting(true), 2000)
 
     const chatApiUrl = getApiUrl()
     if (!chatApiUrl) {
       setMessages((current) => [...current, {
         id: `${requestId}-error`,
         role: 'assistant',
-        content: 'The chat service is not properly configured. Please reload the page and try again.',
+        content: 'The assistant is temporarily unavailable. Please try again or contact Farhad Global Trade directly.',
       }])
       setIsLoading(false)
+      window.clearTimeout(connectingTimeoutId)
       return
     }
 
@@ -208,6 +213,8 @@ function Chatbot() {
       }])
     } finally {
       window.clearTimeout(timeoutId)
+      window.clearTimeout(connectingTimeoutId)
+      setIsConnecting(false)
       setIsLoading(false)
     }
   }
@@ -254,7 +261,7 @@ function Chatbot() {
                 </div>
               </div>
             ))}
-            {isLoading && <div className="chatbot-message-row assistant"><div className="chatbot-message chatbot-thinking"><span /> <span /> <span /></div></div>}
+            {isLoading && <div className="chatbot-message-row assistant"><div className="chatbot-message chatbot-thinking">{isConnecting && <span className="chatbot-connecting">Connecting to the business assistant...</span>}<span /> <span /> <span /></div></div>}
             <div ref={messagesEndRef} />
           </div>
 

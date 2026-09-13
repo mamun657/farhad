@@ -1,7 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import Chatbot from './chatbot/Chatbot'
-import HeroVideoPreloader from './components/HeroVideoPreloader'
 import partnerImage from './assets/partner.png'
 
 const navItems = [
@@ -141,8 +140,6 @@ function App() {
   const [inquirySent, setInquirySent] = useState(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
-  const [minimumTimeComplete, setMinimumTimeComplete] = useState(false)
-  const [showPreloader, setShowPreloader] = useState(true)
   const [activeCredential, setActiveCredential] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -153,10 +150,8 @@ function App() {
   })
   const [formErrors, setFormErrors] = useState({})
   const videoRef = useRef(null)
+  const businessVideoRef = useRef(null)
   const reducedMotion = useRef(false)
-
-  const minimumPreloaderMs = 900
-  const failsafePreloaderMs = 8500
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 16)
@@ -181,37 +176,14 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const minimumTimer = window.setTimeout(() => {
-      setMinimumTimeComplete(true)
-    }, minimumPreloaderMs)
-
-    const failsafeTimer = window.setTimeout(() => {
-      setShowPreloader(false)
-    }, failsafePreloaderMs)
-
-    return () => {
-      window.clearTimeout(minimumTimer)
-      window.clearTimeout(failsafeTimer)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!showPreloader) return
-    if (videoReady && minimumTimeComplete) {
-      const hideTimer = window.setTimeout(() => setShowPreloader(false), 450)
-      return () => window.clearTimeout(hideTimer)
-    }
-  }, [showPreloader, videoReady, minimumTimeComplete])
-
-  useEffect(() => {
     const heroSection = document.querySelector('.hero-video-section')
     if (!heroSection) return
-    if (!showPreloader && videoReady) {
+    if (videoReady) {
       heroSection.classList.add('is-video-visible')
       return
     }
     heroSection.classList.remove('is-video-visible')
-  }, [showPreloader, videoReady])
+  }, [videoReady])
 
   useEffect(() => {
     const video = videoRef.current
@@ -221,7 +193,6 @@ function App() {
       video.muted = true
       video.setAttribute('playsinline', 'true')
       video.setAttribute('webkit-playsinline', 'true')
-      video.preload = 'auto'
     }
 
     const handleCanPlay = () => {
@@ -244,7 +215,6 @@ function App() {
     const handleError = () => {
       console.error('[Hero video] Failed to load or play the Farhad hero video.')
       setVideoReady(false)
-      setShowPreloader(false)
     }
 
     const tryPlayback = async () => {
@@ -273,6 +243,32 @@ function App() {
       video.removeEventListener('waiting', handleWaiting)
       video.removeEventListener('error', handleError)
     }
+  }, [])
+
+  useEffect(() => {
+    const video = businessVideoRef.current
+    if (!video) return undefined
+
+    const startBusinessVideo = () => {
+      video.load()
+      video.play().catch((error) => {
+        console.warn('[Business video] Autoplay was blocked or unavailable:', error?.message || error)
+      })
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      startBusinessVideo()
+      return undefined
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      startBusinessVideo()
+      observer.disconnect()
+    }, { rootMargin: '300px 0px' })
+
+    observer.observe(video)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -381,7 +377,8 @@ function App() {
                 muted
                 loop
                 playsInline
-                preload="auto"
+                preload="metadata"
+                poster="/media/farhad-global-trade-hero-poster.jpg"
                 aria-label="Farhad Global Trade sourcing and supply video"
                 onPlay={() => setVideoPlaying(true)}
                 onPause={() => setVideoPlaying(false)}
@@ -394,8 +391,6 @@ function App() {
                 <span>{videoPlaying ? 'PLAYING' : 'PAUSED'}</span>
               </div>
             </div>
-
-            <HeroVideoPreloader visible={showPreloader} />
 
             <div className="hero-video-copy">
               <p className="eyebrow">FARHAD GLOBAL TRADE</p>
@@ -482,8 +477,8 @@ function App() {
             </div>
 
             <div className="why-farhad-video-shell">
-              <video className="why-farhad-video" autoPlay muted loop playsInline preload="metadata" aria-label="Farhad Global Trade business video">
-                <source src="/media/farhad-global-trade-hero.mp4" type="video/mp4" />
+              <video ref={businessVideoRef} className="why-farhad-video" muted loop playsInline preload="metadata" poster="/media/farhad-global-trade-business-poster.jpg" aria-label="Farhad Global Trade business video">
+                <source src="/media/farhad-global-trade-business.mp4" type="video/mp4" />
               </video>
             </div>
           </div>

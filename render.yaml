@@ -12,7 +12,7 @@ services:
       - key: FRONTEND_URL
         sync: false
       - key: VITE_API_URL
-        sync: false
+        value: https://farhadglobaltrade.onrender.com
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL

@@ -111,6 +111,7 @@ export function setGroqClientFactory(factory) {
 }
 
 export async function handleChatRequest(request, response) {
+  const requestStartedAt = Date.now()
   const body = request.body || {}
   const trimmedMessage = typeof body.message === 'string' ? body.message.trim() : ''
   const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
@@ -126,6 +127,10 @@ export async function handleChatRequest(request, response) {
   if (trimmedMessage.length > maxMessageLength) {
     console.log(`[CHAT-${requestId}] message too long (${trimmedMessage.length} > ${maxMessageLength})`)
     return response.status(413).json({ success: false, error: 'Please keep your message under 2,000 characters.' })
+  }
+  if (body.history !== undefined && !Array.isArray(body.history)) {
+    console.log(`[CHAT-${requestId}] invalid history rejected`)
+    return response.status(400).json({ success: false, error: 'History must be an array.' })
   }
   if (isRateLimited(request)) {
     console.log(`[CHAT-${requestId}] rate limited`)
@@ -155,8 +160,10 @@ export async function handleChatRequest(request, response) {
   }
 
   const apiKey = globalThis.process.env.GROQ_API_KEY
+  console.log(`[CHAT-${requestId}] groq configured: ${Boolean(apiKey)}`)
   if (!apiKey) {
     console.error(`[CHAT-${requestId}] GROQ_API_KEY is not configured`)
+    console.log(`[CHAT-${requestId}] duration: ${Date.now() - requestStartedAt}ms`)
     return response.status(503).json({ success: false, error: 'The AI assistant is not configured. Add GROQ_API_KEY to the server environment and restart the server.' })
   }
 
@@ -207,6 +214,7 @@ export async function handleChatRequest(request, response) {
     }
 
     console.log(`[CHAT-${requestId}] success response sent: ${message.length} chars`)
+    console.log(`[CHAT-${requestId}] duration: ${Date.now() - requestStartedAt}ms`)
     return response.json({ success: true, message })
   } catch (error) {
     console.error(`[CHAT-${requestId}] ERROR caught`)
@@ -222,6 +230,7 @@ export async function handleChatRequest(request, response) {
     
     const status = error?.status === 429 ? 429 : error?.name === 'AbortError' ? 504 : 502
     console.log(`[CHAT-${requestId}] error response status: ${status}`)
+    console.log(`[CHAT-${requestId}] duration: ${Date.now() - requestStartedAt}ms`)
     return response.status(status).json({ success: false, error: safeErrorMessage })
   } finally {
     clearTimeout(timeoutId)

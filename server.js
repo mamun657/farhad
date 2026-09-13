@@ -13,21 +13,29 @@ const configuredFrontendOrigins = (globalThis.process.env.FRONTEND_URL || '')
   .filter(Boolean)
 const allowedOrigins = new Set([
   ...configuredFrontendOrigins,
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
   'https://farhad-global-trade.onrender.com',
+  ...(globalThis.process.env.NODE_ENV === 'production'
+    ? []
+    : ['http://localhost:5173', 'http://127.0.0.1:5173']),
 ])
 
 app.disable('x-powered-by')
 app.use((request, response, next) => {
   const origin = request.headers.origin
+  if (request.method === 'OPTIONS') {
+    if (!origin || !allowedOrigins.has(origin)) return response.sendStatus(403)
+    response.setHeader('Access-Control-Allow-Origin', origin)
+    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.setHeader('Vary', 'Origin')
+    return response.sendStatus(204)
+  }
   if (!origin || !allowedOrigins.has(origin)) return next()
 
   response.setHeader('Access-Control-Allow-Origin', origin)
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   response.setHeader('Vary', 'Origin')
-  if (request.method === 'OPTIONS') return response.sendStatus(204)
   return next()
 })
 app.use(express.json({ limit: '32kb' }))

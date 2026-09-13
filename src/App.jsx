@@ -179,9 +179,25 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const introTimer = window.setTimeout(() => setHeroIntroComplete(true), 3500)
+    const introTimer = window.setTimeout(() => setHeroIntroComplete(true), 3200)
     return () => window.clearTimeout(introTimer)
   }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [menuOpen])
 
   useEffect(() => {
     const heroSection = document.querySelector('.hero-video-section')
@@ -237,6 +253,9 @@ function App() {
     video.addEventListener('pause', handlePause)
     video.addEventListener('error', handleError)
 
+    if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      setVideoReady(true)
+    }
     tryPlayback()
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata)
@@ -246,6 +265,10 @@ function App() {
       video.removeEventListener('error', handleError)
     }
   }, [])
+
+  const handleNavClick = () => {
+    setMenuOpen(false)
+  }
 
   useEffect(() => {
     const video = businessVideoRef.current
@@ -353,7 +376,7 @@ function App() {
 
         <nav className={`nav desktop-nav ${menuOpen ? 'open' : ''}`} aria-label="Main navigation">
           {navItems.map((item) => (
-            <a key={item.label} className={item.className} href={item.href}>
+            <a key={item.label} className={item.className} href={item.href} onClick={handleNavClick}>
               {item.label}
             </a>
           ))}

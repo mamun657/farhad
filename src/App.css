@@ -368,7 +368,7 @@ main {
 .hero-video-preloader-logo {
   position: relative;
   z-index: 2;
-  width: clamp(120px, 11vw, 170px);
+  width: clamp(138px, 13vw, 190px);
   height: auto;
   filter: drop-shadow(0 12px 18px rgba(6, 26, 34, 0.08));
 }
@@ -1266,6 +1266,15 @@ main {
   .footer-main,
   .why-farhad-content {
     grid-template-columns: 1fr;
+  }
+
+  .process-grid {
+    gap: 14px;
+  }
+
+  .step-card {
+    min-width: 0;
+    padding: 20px 16px 16px;
   }
 
   .product-grid {

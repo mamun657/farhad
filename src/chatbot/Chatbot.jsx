@@ -57,13 +57,18 @@ function Chatbot() {
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const messageIdRef = useRef(0)
-  const apiBaseUrl = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '')).trim().replace(/\/+$/, '')
+  const apiBaseUrl = (
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? 'http://localhost:3000' : 'https://farhadglobaltrade.onrender.com')
+  ).trim().replace(/\/+$/, '')
   const requestTimeoutMs = 14_000
 
-  // Validate API URL configuration in production
   const getApiUrl = () => {
-    const url = apiBaseUrl || (typeof window !== 'undefined' && window.location.origin ? window.location.origin : '')
-    return url ? `${url}/api/chat` : null
+    if (!apiBaseUrl) {
+      console.error('[CHATBOT] Missing VITE_API_URL; chat requests cannot be sent.')
+      return null
+    }
+    return `${apiBaseUrl}/api/chat`
   }
 
   useEffect(() => {
@@ -107,6 +112,7 @@ function Chatbot() {
     }
 
     try {
+      console.log(`[CHATBOT] Sending request to ${chatApiUrl}`)
       const response = await fetch(chatApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -117,11 +123,48 @@ function Chatbot() {
         }),
       })
 
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(typeof data.error === 'string' && data.error.trim() ? data.error : 'Sorry, I’m having trouble connecting right now. Please try again in a moment.')
+      console.log(`[CHATBOT] HTTP status: ${response.status}`)
+      console.log(`[CHATBOT] Content-Type: ${response.headers.get('content-type')}`)
+
+      let data
+      let rawText = ''
+      try {
+        rawText = await response.clone().text()
+        console.log(`[CHATBOT] Raw response (first 500 chars): ${rawText.slice(0, 500)}`)
+        data = JSON.parse(rawText)
+      } catch (parseError) {
+        console.error(`[CHATBOT] JSON parse error: ${parseError.message}`)
+        console.error('[CHATBOT] Non-JSON backend response:', rawText.slice(0, 1000))
+        throw new Error('Chat service error. Please try again in a moment.')
+      }
+
+      console.log(`[CHATBOT] Parsed response data:`, JSON.stringify(data, null, 2))
+
+      if (!response.ok) {
+        const errorMessage = typeof data.error === 'string' && data.error.trim() ? data.error : `HTTP ${response.status}: ${response.statusText}`
+        console.error(`[CHATBOT] HTTP error: ${errorMessage}`)
+        throw new Error(errorMessage)
+      }
+
+      if (data.success !== true) {
+        const errorMessage = typeof data.error === 'string' && data.error.trim() ? data.error : 'Backend returned success: false'
+        console.error(`[CHATBOT] Success flag false: ${errorMessage}`)
+        throw new Error(errorMessage)
+      }
 
       const answer = data.message
-      if (typeof answer !== 'string' || !answer.trim()) throw new Error('The assistant returned an invalid response.')
+      console.log(`[CHATBOT] Message type: ${typeof answer}, length: ${String(answer || '').length}`)
+
+      if (typeof answer !== 'string') {
+        console.error(`[CHATBOT] Message is not a string, got ${typeof answer}`)
+        console.error('[CHATBOT] Invalid backend payload:', data)
+        throw new Error('Chat service error. Please try again in a moment.')
+      }
+
+      if (!answer.trim()) {
+        console.error('[CHATBOT] Message is empty after trim')
+        throw new Error('Chat service error. Please try again in a moment.')
+      }
       const { visibleContent } = cleanAssistantContent(answer)
       setMessages((current) => [...current, {
         id: `${requestId}-assistant`,

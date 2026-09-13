@@ -53,9 +53,46 @@ function getSafeHistory(history) {
 }
 
 function getReplyContent(completion) {
-  const content = completion?.choices?.[0]?.message?.content
-  if (typeof content === 'string') return content.trim()
-  if (Array.isArray(content)) return content.map((part) => typeof part === 'string' ? part : part?.text || '').join('').trim()
+  console.log('[GROQ] completion object structure check')
+  console.log('[GROQ] typeof completion:', typeof completion)
+  console.log('[GROQ] has choices:', Boolean(completion?.choices))
+  console.log('[GROQ] choices is array:', Array.isArray(completion?.choices))
+  
+  if (!completion?.choices || !Array.isArray(completion.choices) || completion.choices.length === 0) {
+    console.error('[GROQ] No valid choices in completion')
+    return ''
+  }
+  
+  const firstChoice = completion.choices[0]
+  console.log('[GROQ] first choice exists:', Boolean(firstChoice))
+  console.log('[GROQ] first choice keys:', Object.keys(firstChoice || {}))
+  console.log('[GROQ] first choice.message exists:', Boolean(firstChoice?.message))
+  console.log('[GROQ] first choice.message type:', typeof firstChoice?.message)
+  
+  if (!firstChoice?.message) {
+    console.error('[GROQ] No message in first choice')
+    return ''
+  }
+  
+  const message = firstChoice.message
+  console.log('[GROQ] message.content type:', typeof message.content)
+  console.log('[GROQ] message.content is array:', Array.isArray(message.content))
+  console.log('[GROQ] message.content length:', String(message.content || '').length)
+  
+  const content = message.content
+  
+  if (typeof content === 'string') {
+    console.log('[GROQ] content is string')
+    return content.trim()
+  }
+  if (Array.isArray(content)) {
+    console.log('[GROQ] content is array, processing parts')
+    const joined = content.map((part) => typeof part === 'string' ? part : part?.text || '').join('').trim()
+    console.log('[GROQ] array content joined, length:', joined.length)
+    return joined
+  }
+  
+  console.error('[GROQ] content is neither string nor array, type:', typeof content)
   return ''
 }
 
@@ -74,36 +111,62 @@ export function setGroqClientFactory(factory) {
 export async function handleChatRequest(request, response) {
   const body = request.body || {}
   const trimmedMessage = typeof body.message === 'string' ? body.message.trim() : ''
+  const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
-  if (!trimmedMessage) return response.status(400).json({ success: false, error: 'Message is required.' })
-  if (trimmedMessage.length > maxMessageLength) return response.status(413).json({ success: false, error: 'Please keep your message under 2,000 characters.' })
-  if (isRateLimited(request)) return response.status(429).json({ success: false, error: 'Please wait a moment before trying again.' })
+  console.log(`[CHAT-${requestId}] request received`)
+  console.log(`[CHAT-${requestId}] message length: ${trimmedMessage.length}`)
+  console.log(`[CHAT-${requestId}] history length: ${Array.isArray(body.history) ? body.history.length : 0}`)
+
+  if (!trimmedMessage) {
+    console.log(`[CHAT-${requestId}] empty message rejected`)
+    return response.status(400).json({ success: false, error: 'Message is required.' })
+  }
+  if (trimmedMessage.length > maxMessageLength) {
+    console.log(`[CHAT-${requestId}] message too long (${trimmedMessage.length} > ${maxMessageLength})`)
+    return response.status(413).json({ success: false, error: 'Please keep your message under 2,000 characters.' })
+  }
+  if (isRateLimited(request)) {
+    console.log(`[CHAT-${requestId}] rate limited`)
+    return response.status(429).json({ success: false, error: 'Please wait a moment before trying again.' })
+  }
 
   if (isLocationQuestion(trimmedMessage)) {
+    console.log(`[CHAT-${requestId}] location question detected`)
     const result = getLocationResponse()
+    console.log(`[CHAT-${requestId}] location response sent: ${result.message.length} chars`)
     return response.json({ success: true, message: result.message, link: result.link })
   }
 
   if (isContactQuestion(trimmedMessage)) {
+    console.log(`[CHAT-${requestId}] contact question detected`)
     const result = getContactResponse()
+    console.log(`[CHAT-${requestId}] contact response sent: ${result.message.length} chars`)
     return response.json({ success: true, message: result.message, link: result.link })
   }
 
   if (isOpeningStatusQuestion(trimmedMessage)) {
-    return response.json({ success: true, message: getOpeningStatus().message })
+    console.log(`[CHAT-${requestId}] opening status question detected`)
+    const statusMessage = getOpeningStatus().message
+    console.log(`[CHAT-${requestId}] opening status response sent: ${statusMessage.length} chars`)
+    return response.json({ success: true, message: statusMessage })
   }
 
   const apiKey = globalThis.process.env.GROQ_API_KEY
   if (!apiKey) {
-    console.error('GROQ_API_KEY is not configured.')
+    console.error(`[CHAT-${requestId}] GROQ_API_KEY is not configured`)
     return response.status(503).json({ success: false, error: 'The AI assistant is not configured. Add GROQ_API_KEY to the server environment and restart the server.' })
   }
 
   const model = getConfiguredModel()
+  console.log(`[CHAT-${requestId}] model: ${model}`)
+  
   const client = groqClientFactory(apiKey)
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), groqRequestTimeoutMs)
   const history = getSafeHistory(body.history)
+
+  console.log(`[CHAT-${requestId}] Groq request starting`)
+  console.log(`[CHAT-${requestId}] safe history length: ${history.length}`)
 
   try {
     const completion = await client.chat.completions.create({
@@ -117,19 +180,49 @@ export async function handleChatRequest(request, response) {
         ],
       }, { signal: controller.signal })
 
+    console.log(`[CHAT-${requestId}] Groq response received`)
+    console.log(`[CHAT-${requestId}] has choices: ${Boolean(completion?.choices?.length)}`)
+    console.log(`[CHAT-${requestId}] choices length: ${completion?.choices?.length || 0}`)
+    
+    if (completion?.choices?.length) {
+      const choice = completion.choices[0]
+      console.log(`[CHAT-${requestId}] choice.message exists: ${Boolean(choice?.message)}`)
+      if (choice?.message) {
+        console.log(`[CHAT-${requestId}] message.content type: ${typeof choice.message.content}`)
+        console.log(`[CHAT-${requestId}] message.content length: ${String(choice.message.content || '').length}`)
+        console.log(`[CHAT-${requestId}] message.role: ${choice.message.role}`)
+      }
+    }
+
     const message = getReplyContent(completion)
+    console.log(`[CHAT-${requestId}] parsed message length: ${message.length}`)
+    
     if (!message) {
-      console.error('Groq response did not contain a message.')
+      console.error(`[CHAT-${requestId}] ERROR: Groq response did not contain a valid message`)
+      console.error(`[CHAT-${requestId}] full completion object:`, JSON.stringify(completion, null, 2))
       return response.status(502).json({ success: false, error: safeErrorMessage })
     }
+
+    console.log(`[CHAT-${requestId}] success response sent: ${message.length} chars`)
     return response.json({ success: true, message })
   } catch (error) {
-    if (error?.name === 'AbortError') console.error('Groq request timed out.')
-    else console.error('Groq request failed:', error?.status || error?.name || 'unknown error')
+    console.error(`[CHAT-${requestId}] ERROR caught`)
+    console.error(`[CHAT-${requestId}] error.name: ${error?.name}`)
+    console.error(`[CHAT-${requestId}] error.message: ${error?.message}`)
+    console.error(`[CHAT-${requestId}] error.status: ${error?.status}`)
+    console.error(`[CHAT-${requestId}] error.code: ${error?.code}`)
+    console.error(`[CHAT-${requestId}] error type: ${error?.constructor?.name}`)
+    
+    if (error?.name === 'AbortError') {
+      console.error(`[CHAT-${requestId}] Groq request timed out (${groqRequestTimeoutMs}ms)`)
+    }
+    
     const status = error?.status === 429 ? 429 : error?.name === 'AbortError' ? 504 : 502
+    console.log(`[CHAT-${requestId}] error response status: ${status}`)
     return response.status(status).json({ success: false, error: safeErrorMessage })
   } finally {
     clearTimeout(timeoutId)
+    console.log(`[CHAT-${requestId}] request completed`)
   }
 }
 

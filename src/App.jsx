@@ -1,6 +1,8 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import Chatbot from './chatbot/Chatbot'
+import HeroVideoPreloader from './components/HeroVideoPreloader'
+import partnerImage from './assets/partner.png'
 
 const navItems = [
   { label: 'Home', href: '#home' },
@@ -32,11 +34,11 @@ const productCards = [
   },
   {
     image: '/images/Electronics.png',
-    category: 'CONSUMER ELECTRONICS',
-    title: 'Consumer Electronics',
-    description: 'Everyday electronic products and accessories for modern consumers and businesses.',
-    tags: 'CHARGERS • HEADPHONES • EARPHONES',
-    alt: 'Farhad Global Trade consumer electronics',
+    category: 'MOBILE ACCESSORIES',
+    title: 'Mobile Accessories',
+    description: 'Mobile chargers, earphones, headphones, protective screen glass and small electronic accessories for everyday mobile use.',
+    tags: 'CHARGERS • EARPHONES • SCREEN GLASS',
+    alt: 'Farhad Global Trade mobile accessories and electronic accessories',
     tone: 'stone',
   },
   {
@@ -91,8 +93,43 @@ const credentialItems = [
   { image: '/certificate/pic3.jpg', title: 'E-Trade License' },
 ]
 
-const farhadAddress = 'Oriant Tower (7th flood), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh'
-const farhadMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farhadAddress)}`
+const farhadAddress = 'Oriant Tower (7th floor), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh'
+const farhadMapsUrl = 'https://maps.app.goo.gl/oDcrJf3x8gV6qAk87?g_st=aw'
+const farhadPhoneNumber = '+880 1884 821475'
+const farhadPhoneNumberRaw = '+8801884821475'
+const farhadWhatsAppNumber = '8801531581749'
+const farhadEmail = 'miafarhad01636@gmail.com'
+const productCategories = [
+  'Automotive',
+  'Engine & Spare Parts',
+  'Mobile Accessories',
+  'Fresh Fruits',
+  'Cattle Feed',
+  'Automotive Lubricants & Accessories',
+  'Other / General Inquiry',
+]
+
+const officeHours = [
+  { day: 'Saturday', hours: '9:30 AM – 10:00 PM', closed: false },
+  { day: 'Sunday', hours: '9:30 AM – 10:00 PM', closed: false },
+  { day: 'Monday', hours: '9:30 AM – 10:00 PM', closed: false },
+  { day: 'Tuesday', hours: '9:30 AM – 10:00 PM', closed: false },
+  { day: 'Wednesday', hours: '9:30 AM – 10:00 PM', closed: false },
+  { day: 'Thursday', hours: '9:30 AM – 10:00 PM', closed: false },
+  { day: 'Friday', hours: 'Closed', closed: true },
+]
+
+const irhamPhone = '+88 01815-677521'
+const irhamEmail = 'enterpriseirham@gmail.com'
+const irhamLocation = '7th Floor, Orient Tower, North Laldigi, Kotowali, Chattogram.'
+
+function LocationPinIcon() {
+  return <span className="location-pin-icon" aria-hidden="true"><span /></span>
+}
+
+function ClockIcon() {
+  return <span className="clock-icon" aria-hidden="true"><span /><i /></span>
+}
 
 function ProductImage({ item }) {
   return <img src={item.image} alt={item.alt} />
@@ -103,8 +140,23 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [inquirySent, setInquirySent] = useState(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
+  const [videoReady, setVideoReady] = useState(false)
+  const [minimumTimeComplete, setMinimumTimeComplete] = useState(false)
+  const [showPreloader, setShowPreloader] = useState(true)
   const [activeCredential, setActiveCredential] = useState(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    category: 'Automotive',
+    quantity: '',
+    message: '',
+  })
+  const [formErrors, setFormErrors] = useState({})
   const videoRef = useRef(null)
+  const reducedMotion = useRef(false)
+
+  const minimumPreloaderMs = 900
+  const failsafePreloaderMs = 8500
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 16)
@@ -123,16 +175,104 @@ function App() {
   }, [activeCredential])
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      reducedMotion.current = true
+    }
+  }, [])
+
+  useEffect(() => {
+    const minimumTimer = window.setTimeout(() => {
+      setMinimumTimeComplete(true)
+    }, minimumPreloaderMs)
+
+    const failsafeTimer = window.setTimeout(() => {
+      setShowPreloader(false)
+    }, failsafePreloaderMs)
+
+    return () => {
+      window.clearTimeout(minimumTimer)
+      window.clearTimeout(failsafeTimer)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!showPreloader) return
+    if (videoReady && minimumTimeComplete) {
+      const hideTimer = window.setTimeout(() => setShowPreloader(false), 450)
+      return () => window.clearTimeout(hideTimer)
+    }
+  }, [showPreloader, videoReady, minimumTimeComplete])
+
+  useEffect(() => {
+    const heroSection = document.querySelector('.hero-video-section')
+    if (!heroSection) return
+    if (!showPreloader && videoReady) {
+      heroSection.classList.add('is-video-visible')
+      return
+    }
+    heroSection.classList.remove('is-video-visible')
+  }, [showPreloader, videoReady])
+
+  useEffect(() => {
     const video = videoRef.current
     if (!video) return undefined
 
-    const tryPlayback = () => {
-      video.play().catch(() => {})
+    const handleLoadedMetadata = () => {
+      video.muted = true
+      video.setAttribute('playsinline', 'true')
+      video.setAttribute('webkit-playsinline', 'true')
+      video.preload = 'auto'
     }
 
+    const handleCanPlay = () => {
+      setVideoReady(true)
+    }
+
+    const handlePlaying = () => {
+      setVideoPlaying(true)
+      setVideoReady(true)
+    }
+
+    const handlePause = () => {
+      setVideoPlaying(false)
+    }
+
+    const handleWaiting = () => {
+      setVideoReady(false)
+    }
+
+    const handleError = () => {
+      console.error('[Hero video] Failed to load or play the Farhad hero video.')
+      setVideoReady(false)
+      setShowPreloader(false)
+    }
+
+    const tryPlayback = async () => {
+      if (!video) return
+      video.muted = true
+      try {
+        await video.play()
+      } catch (error) {
+        console.warn('[Hero video] Autoplay was blocked or unavailable:', error?.message || error)
+      }
+    }
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata)
+    video.addEventListener('canplay', handleCanPlay)
+    video.addEventListener('playing', handlePlaying)
+    video.addEventListener('pause', handlePause)
+    video.addEventListener('waiting', handleWaiting)
+    video.addEventListener('error', handleError)
+
     tryPlayback()
-    video.addEventListener('canplay', tryPlayback)
-    return () => video.removeEventListener('canplay', tryPlayback)
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      video.removeEventListener('canplay', handleCanPlay)
+      video.removeEventListener('playing', handlePlaying)
+      video.removeEventListener('pause', handlePause)
+      video.removeEventListener('waiting', handleWaiting)
+      video.removeEventListener('error', handleError)
+    }
   }, [])
 
   useEffect(() => {
@@ -153,6 +293,57 @@ function App() {
     revealItems.forEach((item) => observer.observe(item))
     return () => observer.disconnect()
   }, [])
+
+  const handleInquiryFieldChange = (event) => {
+    const { name, value } = event.target
+    setFormData((current) => ({ ...current, [name]: value }))
+    setFormErrors((current) => ({ ...current, [name]: '' }))
+  }
+
+  const validateInquiryForm = () => {
+    const nextErrors = {}
+    if (!formData.name.trim()) nextErrors.name = 'Please enter your name.'
+    if (!formData.phone.trim()) nextErrors.phone = 'Please enter your phone or WhatsApp number.'
+    if (!formData.category.trim()) nextErrors.category = 'Please select a product category.'
+    if (!formData.message.trim()) nextErrors.message = 'Please describe your requirement.'
+    return nextErrors
+  }
+
+  const handleInquirySubmit = (event) => {
+    event.preventDefault()
+
+    const nextErrors = validateInquiryForm()
+    setFormErrors(nextErrors)
+
+    if (Object.keys(nextErrors).length > 0) {
+      setInquirySent(false)
+      return
+    }
+
+    const message = [
+      'Hello Farhad Global Trade,',
+      '',
+      'I would like to make an inquiry.',
+      '',
+      `Name: ${formData.name.trim()}`,
+      `Phone/WhatsApp: ${formData.phone.trim()}`,
+      `Product/Category: ${formData.category}`,
+      `Quantity/Requirement: ${formData.quantity.trim() || 'Not specified'}`,
+      '',
+      'Message:',
+      formData.message.trim(),
+      '',
+      'Thank you.',
+    ].join('\n')
+
+    const encodedMessage = encodeURIComponent(message)
+    const whatsappUrl = `https://wa.me/${farhadWhatsAppNumber}?text=${encodedMessage}`
+
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+    setInquirySent(true)
+    setFormData({ name: '', phone: '', category: 'Automotive', quantity: '', message: '' })
+    setFormErrors({})
+  }
 
   return (
     <div className="page-shell">
@@ -183,19 +374,31 @@ function App() {
         <section className="hero-video-section" id="home">
           <div className="hero-video-stage">
             <div className="hero-video-shell">
-              <video ref={videoRef} className="hero-video" autoPlay muted loop playsInline preload="metadata" poster="/media/farhad-global-trade-poster.svg" aria-label="Farhad Global Trade sourcing and supply video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)}>
+              <video
+                ref={videoRef}
+                className="hero-video"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-label="Farhad Global Trade sourcing and supply video"
+                onPlay={() => setVideoPlaying(true)}
+                onPause={() => setVideoPlaying(false)}
+              >
                 <source src="/media/farhad-global-trade-hero.mp4" type="video/mp4" />
               </video>
               <div className="hero-video-overlay" />
               <div className="video-status">
-                  <span className="video-status-dot" aria-hidden="true" />
+                <span className="video-status-dot" aria-hidden="true" />
                 <span>{videoPlaying ? 'PLAYING' : 'PAUSED'}</span>
               </div>
             </div>
 
+            <HeroVideoPreloader visible={showPreloader} />
+
             <div className="hero-video-copy">
               <p className="eyebrow">FARHAD GLOBAL TRADE</p>
-              <h1>GLOBAL CONNECTIONS.<br />LOCAL OPPORTUNITIES.</h1>
               <p className="hero-supporting">Import • Supply • Connect</p>
               <div className="button-row">
                 <a className="button button-primary" href="#products">EXPLORE OUR PRODUCTS</a>
@@ -280,7 +483,7 @@ function App() {
 
             <div className="why-farhad-video-shell">
               <video className="why-farhad-video" autoPlay muted loop playsInline preload="metadata" aria-label="Farhad Global Trade business video">
-                <source src="/video/habibi.mp4" type="video/mp4" />
+                <source src="/media/farhad-global-trade-hero.mp4" type="video/mp4" />
               </video>
             </div>
           </div>
@@ -317,30 +520,195 @@ function App() {
           <p className="credential-trust-line">Official registrations &amp; business credentials</p>
         </section>
 
-        <section className="contact-section section-shell reveal-on-scroll" id="contact">
-          <div className="visiting-hours-card">
-            <div className="visiting-hours-heading">
-              <span className="visiting-hours-icon" aria-hidden="true">▤</span>
-              <div>
-                <p className="section-label">BUSINESS AVAILABILITY</p>
-                <h2>Visiting Hours</h2>
-                <p>Contact us before visiting to confirm current availability.</p>
+        <section className="partner-network-section section-shell reveal-on-scroll" id="partners">
+          <div className="partner-network-layout">
+            <div className="partner-network-intro">
+              <p className="partner-eyebrow"><span /> OUR BUSINESS NETWORK</p>
+              <div className="partner-relationship-lockup" aria-label="Farhad Global Trade strategic business partner Irham Enterprise">
+                <span>FARHAD GLOBAL TRADE</span>
+                <b aria-hidden="true">×</b>
+                <span>IRHAM ENTERPRISE</span>
+              </div>
+              <h2>IRHAM<br />ENTERPRISE</h2>
+              <p className="partner-relationship">STRATEGIC BUSINESS PARTNER</p>
+              <p className="partner-short-description">Irham Enterprise supports Farhad Global Trade through bidding, import-export and supplier activities across global trade.</p>
+
+              <div className="partner-information">
+                <p className="partner-capability-line">AUCTION BIDDER <span>•</span> EXPORT <span>•</span> IMPORT <span>•</span> SUPPLIER</p>
+
+                <div className="partner-details-grid">
+                  <div className="partner-detail-block">
+                    <span className="partner-detail-label">CONTACT</span>
+                    <a href="tel:+8801815677521">{irhamPhone}</a>
+                    <a href={`mailto:${irhamEmail}`}>{irhamEmail}</a>
+                  </div>
+                  <div className="partner-detail-block partner-detail-founder">
+                    <span className="partner-detail-label">FOUNDER</span>
+                    <strong>Omar Fayaj Chy <small>· Founder</small></strong>
+                  </div>
+                  <div className="partner-detail-block partner-detail-location">
+                    <span className="partner-detail-label">LOCATION</span>
+                    <small>{irhamLocation}</small>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="hours-summary">OPEN SAT – THU: 10:00 AM – 9:30 PM <span>•</span> FRIDAY: CLOSED</div>
-            <div className="hours-grid">
-              {['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'].map((day) => (
-                <div className="hours-day" key={day}>
-                  <strong>{day}</strong>
-                  <span>10:00 AM – 9:30 PM</span>
-                </div>
-              ))}
-              <div className="hours-day hours-day-closed">
-                <strong>Friday</strong>
-                <span>Closed</span>
-              </div>
+
+            <div className="partner-visual-shell">
+              <img
+                className="partner-visual"
+                src={partnerImage}
+                alt="Strategic business partnership illustration for Irham Enterprise"
+                loading="eager"
+              />
             </div>
           </div>
+        </section>
+
+        <section className="quote-section section-shell reveal-on-scroll" id="contact">
+          <div className="quote-card">
+            <p className="section-label">IMPORT • SOURCING • SUPPLY • BUSINESS INQUIRIES</p>
+            <h2>Request a Product or Supply Quote</h2>
+            <p className="quote-subtitle">Tell us what you are looking for. Share your product requirement and contact details, and Farhad Global Trade will get back to you.</p>
+
+            <form className="quote-form" onSubmit={handleInquirySubmit} noValidate>
+              <div className="quote-field-row">
+                <div className="quote-field">
+                  <label htmlFor="inquiry-name">Your Name *</label>
+                  <input
+                    id="inquiry-name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    value={formData.name}
+                    onChange={handleInquiryFieldChange}
+                    placeholder="e.g. Your full name"
+                    aria-invalid={Boolean(formErrors.name)}
+                  />
+                  {formErrors.name && <span className="quote-error">{formErrors.name}</span>}
+                </div>
+
+                <div className="quote-field">
+                  <label htmlFor="inquiry-phone">Phone / WhatsApp Number *</label>
+                  <input
+                    id="inquiry-phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={formData.phone}
+                    onChange={handleInquiryFieldChange}
+                    placeholder="+880..."
+                    aria-invalid={Boolean(formErrors.phone)}
+                  />
+                  {formErrors.phone && <span className="quote-error">{formErrors.phone}</span>}
+                </div>
+              </div>
+
+              <div className="quote-field-row">
+                <div className="quote-field">
+                  <label htmlFor="inquiry-category">Product / Category *</label>
+                  <select
+                    id="inquiry-category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInquiryFieldChange}
+                    aria-invalid={Boolean(formErrors.category)}
+                  >
+                    {productCategories.map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                  {formErrors.category && <span className="quote-error">{formErrors.category}</span>}
+                </div>
+
+                <div className="quote-field">
+                  <label htmlFor="inquiry-quantity">Quantity / Requirement</label>
+                  <input
+                    id="inquiry-quantity"
+                    name="quantity"
+                    type="text"
+                    value={formData.quantity}
+                    onChange={handleInquiryFieldChange}
+                    placeholder="e.g. quantity, model, specification, packaging..."
+                  />
+                </div>
+              </div>
+
+              <div className="quote-field quote-field-full">
+                <label htmlFor="inquiry-message">Your Message / Requirement *</label>
+                <textarea
+                  id="inquiry-message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInquiryFieldChange}
+                  placeholder="Tell us about the product, quantity, specification, destination or business requirement..."
+                  aria-invalid={Boolean(formErrors.message)}
+                />
+                {formErrors.message && <span className="quote-error">{formErrors.message}</span>}
+              </div>
+
+              {inquirySent && (
+                <p className="quote-success">Your inquiry is ready to send via WhatsApp. A new message window will open with your requirement details.</p>
+              )}
+
+              <button type="submit" className="quote-submit">Send Inquiry Via WhatsApp <span aria-hidden="true">→</span></button>
+
+              <div className="quote-contact-grid">
+                <div className="quote-contact-item">
+                  <span>Direct Contact</span>
+                  <a href={`tel:${farhadPhoneNumberRaw}`}>{farhadPhoneNumber}</a>
+                </div>
+                <div className="quote-contact-item">
+                  <span>Email</span>
+                  <a href={`mailto:${farhadEmail}`}>{farhadEmail}</a>
+                </div>
+                <div className="quote-contact-item quote-contact-address">
+                  <span>Location</span>
+                  <p>{farhadAddress}</p>
+                </div>
+                <div className="quote-contact-tag">CHITTAGONG • BANGLADESH</div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section className="location-hours-section section-shell reveal-on-scroll" id="location">
+          <article className="location-panel">
+            <div className="location-panel-copy">
+              <p className="location-eyebrow">OUR OFFICE LOCATION</p>
+              <div className="location-panel-main">
+                <div className="location-icon-shell"><LocationPinIcon /></div>
+                <div>
+                  <h2>Oriant Tower (7th floor), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh</h2>
+                  <p>Visit our office for business discussions, product inquiries or import &amp; supply consultation.</p>
+                </div>
+              </div>
+            </div>
+            <a className="maps-button location-maps-button" href={farhadMapsUrl} target="_blank" rel="noopener noreferrer" aria-label="Open Farhad Global Trade office location in Google Maps">OPEN IN GOOGLE MAPS <span aria-hidden="true">→</span></a>
+          </article>
+
+          <article className="hours-panel" id="office-hours">
+            <div className="hours-panel-header">
+              <div className="hours-heading-group">
+                <div className="hours-icon-shell"><ClockIcon /></div>
+                <div>
+                  <p className="location-eyebrow">OFFICE HOURS</p>
+                  <h2>Office Visiting Hours</h2>
+                  <p>You can visit our office during the following hours.</p>
+                </div>
+              </div>
+              <div className="hours-summary" aria-label="Office hours summary">Open Sat – Thu: 9:30 AM – 10:00 PM <span aria-hidden="true">•</span> Friday: Closed</div>
+            </div>
+            <div className="hours-divider" />
+            <div className="hours-grid" aria-label="Weekly office hours">
+              {officeHours.map((item) => (
+                <div className={`hours-day ${item.closed ? 'hours-day-closed' : ''}`} key={item.day}>
+                  <strong>{item.day}</strong>
+                  <span>{item.hours}</span>
+                </div>
+              ))}
+            </div>
+          </article>
         </section>
       </main>
 
@@ -366,7 +734,7 @@ function App() {
 
           <div className="footer-links">
             <p className="footer-kicker">VISIT / CONTACT</p>
-            <a href="#location">⌖ Oriant Tower (7th flood),<br />Laldighir Uttar Par,<br />Kotwali, Chittagong,<br />Bangladesh</a>
+            <a href="#location">⌖ Oriant Tower (7th floor),<br />Laldighir Uttar Par,<br />Kotwali, Chittagong-4000,<br />Bangladesh</a>
             <a href="tel:+8801884821475">☎ +880 1884 821475</a>
             <a href="mailto:miafarhad01636@gmail.com">✉ miafarhad01636@gmail.com</a>
           </div>

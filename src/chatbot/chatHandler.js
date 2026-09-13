@@ -26,7 +26,8 @@ function getSystemPrompt(openingStatus) {
 Farhad Global Trade is an import, sourcing and supply business operating in Bangladesh. It connects international suppliers and products with the Bangladeshi market.
 Founder: Mir Mohammed Farhad. Role: Founder. Tagline: Global Connections.
 Contact: +880 1884 821475. Email: miafarhad01636@gmail.com.
-Address: Oriant Tower (7th flood), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh.
+Address: Oriant Tower (7th floor), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh.
+Office hours: Saturday–Thursday, 9:30 AM–10:00 PM. Friday: Closed.
 
 Known product categories:
 - Automotive: vehicles, car engines and automotive products.
@@ -35,6 +36,7 @@ Known product categories:
 - Mobile Accessories: mobile chargers, earphones, headphones, protective screen glass and small electronic accessories.
 - Fresh Fruits: apples, oranges / malta and grapes.
 - Cattle Feed: wheat bran, গরুর ভুসি and cattle feed.
+- Automotive Lubricants & Accessories: engine oil, gear oil, filters and automotive accessories.
 
 Business model: international supplier -> sourcing -> import -> Bangladesh -> supply -> dealer/customer.
 Known services: global sourcing, import coordination, product supply connections, dealer enquiries, customer enquiries and business enquiries.
@@ -146,9 +148,10 @@ export async function handleChatRequest(request, response) {
 
   if (isOpeningStatusQuestion(trimmedMessage)) {
     console.log(`[CHAT-${requestId}] opening status question detected`)
-    const statusMessage = getOpeningStatus().message
+    const openingStatus = getOpeningStatus(trimmedMessage)
+    const statusMessage = openingStatus.message
     console.log(`[CHAT-${requestId}] opening status response sent: ${statusMessage.length} chars`)
-    return response.json({ success: true, message: statusMessage })
+    return response.json({ success: true, message: statusMessage, link: openingStatus.link })
   }
 
   const apiKey = globalThis.process.env.GROQ_API_KEY

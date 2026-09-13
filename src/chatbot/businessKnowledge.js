@@ -1,4 +1,16 @@
-﻿export const businessKnowledge = {
+﻿export const officeHours = {
+  Saturday: '9:30 AM – 10:00 PM',
+  Sunday: '9:30 AM – 10:00 PM',
+  Monday: '9:30 AM – 10:00 PM',
+  Tuesday: '9:30 AM – 10:00 PM',
+  Wednesday: '9:30 AM – 10:00 PM',
+  Thursday: '9:30 AM – 10:00 PM',
+  Friday: 'Closed',
+}
+
+const officeHoursSummary = 'Saturday–Thursday: 9:30 AM – 10:00 PM. Friday: Closed.'
+
+export const businessKnowledge = {
   name: 'Farhad Global Trade',
   founder: 'Mir Mohammed Farhad',
   role: 'Founder',
@@ -6,19 +18,21 @@
   timezone: 'Asia/Dhaka',
   phone: '+880 1884 821475',
   email: 'miafarhad01636@gmail.com',
-  address: 'Oriant Tower (7th flood), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh',
-  openingHours: 'Current visiting and business availability is not listed. Please contact Farhad Global Trade for the latest availability.',
+  address: 'Oriant Tower (7th floor), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh',
+  openingHours: officeHoursSummary,
   location: {
     businessName: 'Farhad Global Trade',
-    address: 'Oriant Tower (7th flood), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh',
-    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Oriant%20Tower%20(7th%20flood)%2C%20Laldighir%20Uttar%20Par%2C%20Kotwali%2C%20Chittagong-4000%2C%20Bangladesh',
+    address: 'Oriant Tower (7th floor), Laldighir Uttar Par, Kotwali, Chittagong-4000, Bangladesh',
+    googleMapsUrl: 'https://maps.app.goo.gl/oDcrJf3x8gV6qAk87?g_st=aw',
   },
   categories: [
     'Automotive',
+    'Engine & Spare Parts',
     'Consumer Electronics',
     'Mobile Accessories',
     'Fresh Fruits',
     'Cattle Feed',
+    'Automotive Lubricants & Accessories',
   ],
   services: [
     'Global sourcing',
@@ -34,6 +48,7 @@
     Services: '#services',
     Contact: '#contact',
     Location: '#location',
+    OfficeHours: '#office-hours',
   },
 }
 
@@ -80,24 +95,44 @@ export function getDhakaDateParts(date = new Date()) {
 }
 
 export function getTodayOpeningWindow() {
-  return { open: 'Business hours', close: 'By enquiry' }
+  return { open: '9:30 AM', close: '10:00 PM' }
 }
 
-export function getOpeningStatus(date = new Date()) {
+export function getOpeningStatus(question = '', date = new Date()) {
   const dateParts = getDhakaDateParts(date)
-  const weekday = dateParts.weekday
+  const requestedDay = Object.keys(officeHours).find((day) => new RegExp(`\\b${day}\\b`, 'i').test(question))
+  const weekday = requestedDay || dateParts.weekday
+  const hours = officeHours[weekday] || officeHours.Saturday
+  const isClosedDay = hours === 'Closed'
+  const isSpecificDay = Boolean(requestedDay)
+
+  let message
+  if (isSpecificDay && isClosedDay) {
+    message = 'Friday: Closed.\n\nOur office is open Saturday–Thursday from 9:30 AM to 10:00 PM.'
+  } else if (isSpecificDay) {
+    message = `${weekday}: ${hours}.\n\nView the full weekly schedule below.`
+  } else if (/(today|now|are you open)/i.test(question)) {
+    message = `${weekday}: ${hours}.\n\nOur office is open Saturday–Thursday from 9:30 AM to 10:00 PM.`
+  } else {
+    message = 'Our office is open Saturday–Thursday, 9:30 AM–10:00 PM.\nFriday is closed.\n\nYou can visit us during these hours.'
+  }
 
   return {
     day: weekday,
     date: `${dateParts.month} ${dateParts.day}, ${dateParts.year}`,
-    isOpen: true,
-    isClosedDay: false,
-    message: `Our current visiting/business hours are not listed here. Please contact Farhad Global Trade at ${businessKnowledge.phone} or ${businessKnowledge.email} for the latest availability.`,
+    hours,
+    isOpen: !isClosedDay,
+    isClosedDay,
+    message,
+    link: {
+      label: 'View Office Hours',
+      url: businessKnowledge.sections.OfficeHours,
+    },
   }
 }
 
 export function isOpeningStatusQuestion(question = '') {
-  return /(open|closed|close|hours|hour|opening|today|now|enquiry|what time|when can|availability|visiting hours)/i.test(question)
+  return /(open|closed|close|hours|hour|time|opening|closing|today|now|enquiry|what time|when can|when do you|availability|visiting|business hours|office time|office hours|friday office|saturday office)/i.test(question)
 }
 
 export function isLocationQuestion(question = '') {

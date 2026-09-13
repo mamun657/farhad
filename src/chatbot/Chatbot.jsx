@@ -1,5 +1,5 @@
 ﻿import { useEffect, useRef, useState } from 'react'
-import { businessKnowledge } from './businessKnowledge'
+import { businessKnowledge, getOpeningStatus, isOpeningStatusQuestion } from './businessKnowledge'
 import './chatbot.css'
 
 const quickQuestions = [
@@ -18,6 +18,7 @@ const navigationLabels = {
   services: 'Services',
   contact: 'Contact',
   location: 'View Location',
+  officeHours: 'View Office Hours',
 }
 
 const navigationTargets = {
@@ -27,10 +28,12 @@ const navigationTargets = {
   services: businessKnowledge.sections.Services,
   contact: businessKnowledge.sections.Contact,
   location: businessKnowledge.sections.Location,
+  officeHours: businessKnowledge.sections.OfficeHours,
 }
 
 function getNavigationAction(question, answer) {
   const text = `${question} ${answer}`.toLowerCase()
+  if (isOpeningStatusQuestion(question)) return { label: navigationLabels.officeHours, href: navigationTargets.officeHours }
 
   if (text.includes('address') || text.includes('located') || text.includes('location') || text.includes('visit')) return { label: navigationLabels.location, href: navigationTargets.location }
   if (text.includes('automotive') || text.includes('engine') || text.includes('spare')) return { label: navigationLabels.products, href: navigationTargets.products }
@@ -42,8 +45,23 @@ function getNavigationAction(question, answer) {
   return { label: navigationLabels.home, href: navigationTargets.home }
 }
 
+function formatAssistantContent(content) {
+  return String(content || '')
+    .replace(/```[\s\S]*?```/g, (block) => block.replace(/^```[^\n]*\n?|```$/g, ''))
+    .replace(/^\s*#{1,6}\s*/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '• ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/_([^_\n]+)_/g, '$1')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 function cleanAssistantContent(content) {
-  return { visibleContent: content.trim(), embeddedUrl: null }
+  return { visibleContent: formatAssistantContent(content), embeddedUrl: null }
 }
 
 function Chatbot() {
@@ -59,7 +77,7 @@ function Chatbot() {
   const messageIdRef = useRef(0)
   const apiBaseUrl = (
     import.meta.env.VITE_API_URL ||
-    (import.meta.env.DEV ? 'http://localhost:3000' : 'https://farhadglobaltrade.onrender.com')
+    (import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin)
   ).trim().replace(/\/+$/, '')
   const requestTimeoutMs = 14_000
 
@@ -165,7 +183,10 @@ function Chatbot() {
         console.error('[CHATBOT] Message is empty after trim')
         throw new Error('Chat service error. Please try again in a moment.')
       }
-      const { visibleContent } = cleanAssistantContent(answer)
+      const confirmedAnswer = isOpeningStatusQuestion(trimmedQuestion)
+        ? getOpeningStatus(trimmedQuestion).message
+        : answer
+      const { visibleContent } = cleanAssistantContent(confirmedAnswer)
       setMessages((current) => [...current, {
         id: `${requestId}-assistant`,
         role: 'assistant',
@@ -191,6 +212,19 @@ function Chatbot() {
     sendMessage(input)
   }
 
+  const handleNavigationActionClick = (event, action) => {
+    if (action.href?.startsWith('#')) {
+      const target = document.querySelector(action.href)
+      if (target) {
+        event.preventDefault()
+        const targetTop = target.getBoundingClientRect().top + window.scrollY - 118
+        window.scrollTo({ top: targetTop, behavior: 'smooth' })
+        window.history.pushState(null, '', action.href)
+      }
+    }
+    setIsOpen(false)
+  }
+
   return (
     <div className="chatbot-root">
       {isOpen && (
@@ -210,7 +244,7 @@ function Chatbot() {
                 <div className="chatbot-message">
                   {message.content}
                   {message.action && (
-                    <a className="chatbot-action" href={message.action.href} target={message.action.external ? '_blank' : undefined} rel={message.action.external ? 'noopener noreferrer' : undefined} onClick={() => setIsOpen(false)}>{message.action.label} <span aria-hidden="true">&rarr;</span></a>
+                    <a className="chatbot-action" href={message.action.href} target={message.action.external ? '_blank' : undefined} rel={message.action.external ? 'noopener noreferrer' : undefined} onClick={(event) => handleNavigationActionClick(event, message.action)}>{message.action.label} <span aria-hidden="true">&rarr;</span></a>
                   )}
                 </div>
               </div>

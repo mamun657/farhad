@@ -21,8 +21,20 @@ test('business knowledge covers the required categories', () => {
 })
 
 test('basic business questions have knowledge available for the AI prompt', () => {
-  assert.match(getOpeningStatus().message, /not listed|latest availability/i)
+  assert.match(getOpeningStatus().message, /9:30 AM – 10:00 PM|Friday is closed/i)
   assert.match(getLocationResponse().message, /Bangladesh|global sourcing/i)
+})
+
+test('office-hours questions return the confirmed schedule and navigation link', () => {
+  const genericResponse = getOpeningStatus('office hours')
+  const fridayResponse = getOpeningStatus('Friday office time?')
+  const saturdayResponse = getOpeningStatus('Saturday office time?')
+
+  assert.match(genericResponse.message, /Saturday–Thursday, 9:30 AM–10:00 PM/i)
+  assert.match(genericResponse.message, /Friday is closed/i)
+  assert.deepEqual(genericResponse.link, { label: 'View Office Hours', url: '#office-hours' })
+  assert.match(fridayResponse.message, /Friday: Closed/i)
+  assert.match(saturdayResponse.message, /Saturday: 9:30 AM – 10:00 PM/i)
 })
 
 test('chat validation returns the documented error schema', async () => {

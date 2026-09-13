@@ -2710,7 +2710,10 @@ main {
 .partner-network-section .partner-eyebrow { color: #a8741a !important; }
 .partner-network-section .partner-network-intro h2 { color: #101c2c; }
 .partner-network-section .partner-relationship { color: #087f8c; }
-.partner-network-section .partner-short-description { color: #445064; }
+.partner-network-section .partner-short-description {
+  color: #26364b !important;
+  font-weight: 500;
+}
 .partner-network-section .partner-capability-line { color: #26364b; }
 .partner-network-section .partner-capability-line span { color: #b07b28; }
 .partner-network-section .partner-detail-label { color: #b07b28; }

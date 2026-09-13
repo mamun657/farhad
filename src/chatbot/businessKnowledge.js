@@ -158,8 +158,8 @@ export function getProductAnswer(question = '') {
     return 'Farhad Global Trade sources fresh fruits including apples, oranges or malta, grapes and other applicable produce for the Bangladeshi market.'
   }
 
-  if (/(cattle|feed|wheat bran|গরুর ভুসি|livestock)/.test(text)) {
-    return 'The supply focus includes cattle feed and feed-related products such as wheat bran and other livestock feed needs.'
+  if (/(cattle|feed|wheat bran|livestock)/.test(text)) {
+    return 'Yes, we supply cattle feed, including wheat bran and other cattle feed products.'
   }
 
   if (/(import|supply|source|global)/.test(text)) {

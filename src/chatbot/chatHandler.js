@@ -35,7 +35,7 @@ Known product categories:
 - Consumer Electronics: chargers, headphones and earphones.
 - Mobile Accessories: mobile chargers, earphones, headphones, protective screen glass and small electronic accessories.
 - Fresh Fruits: apples, oranges / malta and grapes.
-- Cattle Feed: wheat bran, গরুর ভুসি and cattle feed.
+- Cattle Feed: wheat bran and other cattle feed products.
 - Automotive Lubricants & Accessories: engine oil, gear oil, filters and automotive accessories.
 
 Business model: international supplier -> sourcing -> import -> Bangladesh -> supply -> dealer/customer.

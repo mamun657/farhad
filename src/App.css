@@ -1064,11 +1064,15 @@ main {
 
 .quote-contact-item a,
 .quote-contact-item p {
+  min-width: 0;
+  max-width: 100%;
   margin: 0;
   color: #f5f2eb;
   font-size: 0.84rem;
   line-height: 1.45;
   text-decoration: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .quote-contact-address {
@@ -2709,7 +2713,7 @@ main {
 
 .partner-network-section .partner-eyebrow { color: #a8741a !important; }
 .partner-network-section .partner-network-intro h2 { color: #101c2c; }
-.partner-network-section .partner-relationship { color: #087f8c; }
+.partner-network-section .partner-relationship { color: #8c5a14 !important; }
 .partner-network-section .partner-short-description {
   color: #26364b !important;
   font-weight: 500;
@@ -2730,6 +2734,32 @@ main {
 
 .partner-network-section .partner-visual-shell {
   background: radial-gradient(circle at center, rgba(220, 185, 120, 0.08), transparent 65%);
+}
+
+@media (max-width: 760px) {
+  .quote-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-contact-item,
+  .partner-network-intro,
+  .partner-visual-shell {
+    min-width: 0;
+  }
+
+  .partner-network-intro h2,
+  .partner-relationship,
+  .partner-short-description {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .partner-visual {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -3,6 +3,8 @@ import './App.css'
 import Chatbot from './chatbot/Chatbot'
 import HeroVideoPreloader from './components/HeroVideoPreloader'
 import partnerImage from './assets/partner.png'
+import founderImage from './owner/fou1.jpg'
+import ceoImage from './owner/fou2.jpg'
 import heroVideoSource from '../video/Fa vid.mp4'
 
 const navItems = [
@@ -123,6 +125,16 @@ const officeHours = [
 const irhamPhone = '+88 01815-677521'
 const irhamEmail = 'enterpriseirham@gmail.com'
 const irhamLocation = '7th Floor, Orient Tower, North Laldigi, Kotowali, Chattogram.'
+const founderProfiles = [
+  {
+    image: founderImage,
+    alt: 'Mir Mohammed Farhad, Founder and Owner of Farhad Global Trade',
+  },
+  {
+    image: ceoImage,
+    alt: 'Mir Mohammed Farhad, Founder and Owner of Farhad Global Trade',
+  },
+]
 
 function LocationPinIcon() {
   return <span className="location-pin-icon" aria-hidden="true"><span /></span>
@@ -540,6 +552,25 @@ function App() {
           <p className="credential-trust-line">Official registrations &amp; business credentials</p>
         </section>
 
+        <section className="founder-owner-section section-shell reveal-on-scroll" id="founder">
+          <div className="founder-owner-layout">
+            <div className="founder-owner-copy">
+              <p className="founder-owner-eyebrow"><span /> FOUNDER &amp; OWNER</p>
+              <h2>Mir Mohammed Farhad</h2>
+              <p className="founder-owner-company">FARHAD GLOBAL TRADE</p>
+              <p className="founder-owner-description">Leading Farhad Global Trade with a focus on global sourcing, import, supply and long-term business connections.</p>
+            </div>
+
+            <div className="founder-owner-gallery" aria-label="Portraits of Mir Mohammed Farhad">
+              {founderProfiles.map((profile) => (
+                <div className="founder-owner-image-shell" key={profile.image}>
+                  <img className="founder-owner-image" src={profile.image} alt={profile.alt} loading="lazy" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="partner-network-section section-shell reveal-on-scroll" id="partners">
           <div className="partner-network-layout">
             <div className="partner-network-intro">
@@ -549,7 +580,7 @@ function App() {
                 <b aria-hidden="true">×</b>
                 <span>IRHAM ENTERPRISE</span>
               </div>
-              <h2>IRHAM<br />ENTERPRISE</h2>
+              <h2 className="irham-title"><span>IRHAM</span> <span>ENTERPRISE</span></h2>
               <p className="partner-relationship">STRATEGIC BUSINESS PARTNER</p>
               <p className="partner-short-description">Irham Enterprise supports Farhad Global Trade through bidding, import-export and supplier activities across global trade.</p>
 
@@ -561,10 +592,6 @@ function App() {
                     <span className="partner-detail-label">CONTACT</span>
                     <a href="tel:+8801815677521">{irhamPhone}</a>
                     <a href={`mailto:${irhamEmail}`}>{irhamEmail}</a>
-                  </div>
-                  <div className="partner-detail-block partner-detail-founder">
-                    <span className="partner-detail-label">FOUNDER</span>
-                    <strong>Omar Fayaj Chy <small>· Founder</small></strong>
                   </div>
                   <div className="partner-detail-block partner-detail-location">
                     <span className="partner-detail-label">LOCATION</span>
@@ -583,6 +610,7 @@ function App() {
               />
             </div>
           </div>
+
         </section>
 
         <section className="quote-section section-shell reveal-on-scroll" id="contact">

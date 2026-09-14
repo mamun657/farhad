@@ -13,7 +13,6 @@ const configuredFrontendOrigins = (globalThis.process.env.FRONTEND_URL || '')
   .filter(Boolean)
 const allowedOrigins = new Set([
   ...configuredFrontendOrigins,
-  'https://farhad-global-trade.onrender.com',
   ...(globalThis.process.env.NODE_ENV === 'production'
     ? []
     : ['http://localhost:5173', 'http://127.0.0.1:5173']),

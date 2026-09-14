@@ -218,13 +218,18 @@ function App() {
     const video = videoRef.current
     if (!video) return undefined
 
+    const fallbackTimer = window.setTimeout(() => {
+      setHeroIntroComplete(true)
+      setVideoReady(true)
+    }, 4500)
+
     const handleLoadedMetadata = () => {
       video.muted = true
       video.setAttribute('playsinline', 'true')
       video.setAttribute('webkit-playsinline', 'true')
     }
 
-    const handleCanPlay = () => {
+    const handlePlayable = () => {
       setVideoReady(true)
     }
 
@@ -239,7 +244,7 @@ function App() {
 
     const handleError = () => {
       console.error('[Hero video] Failed to load or play the Farhad hero video.')
-      setVideoReady(false)
+      setVideoReady(true)
     }
 
     const tryPlayback = async () => {
@@ -253,7 +258,9 @@ function App() {
     }
 
     video.addEventListener('loadedmetadata', handleLoadedMetadata)
-    video.addEventListener('canplay', handleCanPlay)
+    video.addEventListener('loadeddata', handlePlayable)
+    video.addEventListener('canplay', handlePlayable)
+    video.addEventListener('canplaythrough', handlePlayable)
     video.addEventListener('playing', handlePlaying)
     video.addEventListener('pause', handlePause)
     video.addEventListener('error', handleError)
@@ -264,10 +271,13 @@ function App() {
     tryPlayback()
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata)
-      video.removeEventListener('canplay', handleCanPlay)
+      video.removeEventListener('loadeddata', handlePlayable)
+      video.removeEventListener('canplay', handlePlayable)
+      video.removeEventListener('canplaythrough', handlePlayable)
       video.removeEventListener('playing', handlePlaying)
       video.removeEventListener('pause', handlePause)
       video.removeEventListener('error', handleError)
+      window.clearTimeout(fallbackTimer)
     }
   }, [])
 

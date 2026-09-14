@@ -31,8 +31,6 @@ const navigationTargets = {
   officeHours: businessKnowledge.sections.OfficeHours,
 }
 
-const productionApiUrl = 'https://farhadglobaltrade.onrender.com'
-
 function getNavigationAction(question, answer) {
   const text = `${question} ${answer}`.toLowerCase()
   if (isOpeningStatusQuestion(question)) return { label: navigationLabels.officeHours, href: navigationTargets.officeHours }
@@ -89,15 +87,11 @@ function Chatbot() {
   const inputRef = useRef(null)
   const messageIdRef = useRef(0)
   const apiBaseUrl = (
-    import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : productionApiUrl)
+    import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3000') : ''
   ).trim().replace(/\/+$/, '')
   const requestTimeoutMs = 30_000
 
   const getApiUrl = () => {
-    if (!apiBaseUrl) {
-      console.error('[Chatbot] Missing VITE_API_URL in the production build; chat requests cannot be sent.')
-      return null
-    }
     return `${apiBaseUrl}/api/chat`
   }
 

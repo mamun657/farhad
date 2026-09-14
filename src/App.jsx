@@ -4,7 +4,6 @@ import Chatbot from './chatbot/Chatbot'
 import HeroVideoPreloader from './components/HeroVideoPreloader'
 import partnerImage from './assets/partner.png'
 import founderImage from './owner/fou1.jpg'
-import ceoImage from './owner/fou2.jpg'
 import heroVideoSource from '../video/Fa vid.mp4'
 
 const navItems = [
@@ -125,16 +124,10 @@ const officeHours = [
 const irhamPhone = '+88 01815-677521'
 const irhamEmail = 'enterpriseirham@gmail.com'
 const irhamLocation = '7th Floor, Orient Tower, North Laldigi, Kotowali, Chattogram.'
-const founderProfiles = [
-  {
-    image: founderImage,
-    alt: 'Mir Mohammed Farhad, Founder and Owner of Farhad Global Trade',
-  },
-  {
-    image: ceoImage,
-    alt: 'Mir Mohammed Farhad, Founder and Owner of Farhad Global Trade',
-  },
-]
+const founderProfile = {
+  image: founderImage,
+  alt: 'Mir Mohammed Farhad, Founder and Owner of Farhad Global Trade',
+}
 
 function LocationPinIcon() {
   return <span className="location-pin-icon" aria-hidden="true"><span /></span>
@@ -561,12 +554,10 @@ function App() {
               <p className="founder-owner-description">Leading Farhad Global Trade with a focus on global sourcing, import, supply and long-term business connections.</p>
             </div>
 
-            <div className="founder-owner-gallery" aria-label="Portraits of Mir Mohammed Farhad">
-              {founderProfiles.map((profile) => (
-                <div className="founder-owner-image-shell" key={profile.image}>
-                  <img className="founder-owner-image" src={profile.image} alt={profile.alt} loading="lazy" />
-                </div>
-              ))}
+            <div className="founder-owner-gallery" aria-label="Portrait of Mir Mohammed Farhad">
+              <div className="founder-owner-image-shell">
+                <img className="founder-owner-image" src={founderProfile.image} alt={founderProfile.alt} loading="lazy" />
+              </div>
             </div>
           </div>
         </section>

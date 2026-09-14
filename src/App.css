@@ -2845,13 +2845,13 @@ main {
 
 .founder-owner-gallery {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  justify-items: end;
   min-width: 0;
 }
 
 .founder-owner-image-shell {
-  aspect-ratio: 4 / 5;
+  width: min(100%, 520px);
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   background: #e9e5dc;
   border: 1px solid rgba(161, 123, 59, 0.35);
@@ -2884,8 +2884,7 @@ main {
   .founder-owner-company { margin-top: 16px; font-size: 0.62rem; }
   .founder-owner-description { font-size: 0.82rem; }
   .founder-owner-gallery {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    justify-items: center;
   }
 
   .founder-owner-image-shell {

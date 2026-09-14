@@ -5,6 +5,7 @@ import HeroVideoPreloader from './components/HeroVideoPreloader'
 import partnerImage from './assets/partner.png'
 import founderImage from './owner/fou1.jpg'
 import heroVideoSource from '../video/Fa vid.mp4'
+import businessVideoSource from '../video/habibi.mp4'
 
 const navItems = [
   { label: 'Home', href: '#home' },
@@ -517,8 +518,8 @@ function App() {
             </div>
 
             <div className="why-farhad-video-shell">
-              <video ref={businessVideoRef} className="why-farhad-video" muted loop playsInline preload="metadata" poster="/media/farhad-global-trade-business-poster.jpg" aria-label="Farhad Global Trade business video">
-                <source src="/media/farhad-global-trade-business.mp4" type="video/mp4" />
+              <video ref={businessVideoRef} className="why-farhad-video" autoPlay muted loop playsInline preload="metadata" poster="/media/farhad-global-trade-business-poster.jpg" aria-label="Farhad Global Trade business video">
+                <source src={businessVideoSource} type="video/mp4" />
               </video>
             </div>
           </div>

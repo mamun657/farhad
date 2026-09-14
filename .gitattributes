@@ -1,3 +1,4 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 video/Fa?vid.mp4 -filter -diff -merge binary
 video/habibi.mp4 -filter -diff -merge binary
+src/assets/video/*.mp4 -filter -diff -merge binary

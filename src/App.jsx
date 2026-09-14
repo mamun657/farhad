@@ -4,8 +4,9 @@ import Chatbot from './chatbot/Chatbot'
 import HeroVideoPreloader from './components/HeroVideoPreloader'
 import partnerImage from './assets/partner.png'
 import founderImage from './owner/fou1.jpg'
-import heroVideoSource from '../video/Fa vid.mp4'
-import businessVideoSource from '../video/habibi.mp4'
+import heroVideoSource from './assets/video/Fa vid.web.mp4'
+import businessVideoSource from './assets/video/habibi.web.mp4'
+import heroVideoPoster from './assets/hero-video-poster.webp'
 
 const navItems = [
   { label: 'Home', href: '#home' },
@@ -185,7 +186,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const introTimer = window.setTimeout(() => setHeroIntroComplete(true), 3200)
+    const introTimer = window.setTimeout(() => setHeroIntroComplete(true), 1200)
     return () => window.clearTimeout(introTimer)
   }, [])
 
@@ -222,7 +223,7 @@ function App() {
     const fallbackTimer = window.setTimeout(() => {
       setHeroIntroComplete(true)
       setVideoReady(true)
-    }, 4500)
+    }, 2500)
 
     const handleLoadedMetadata = () => {
       video.muted = true
@@ -237,6 +238,7 @@ function App() {
     const handlePlaying = () => {
       setVideoPlaying(true)
       setVideoReady(true)
+      setHeroIntroComplete(true)
     }
 
     const handlePause = () => {
@@ -291,6 +293,7 @@ function App() {
     if (!video) return undefined
 
     const startBusinessVideo = () => {
+      if (!video.src) video.src = businessVideoSource
       video.load()
       video.play().catch((error) => {
         console.warn('[Business video] Autoplay was blocked or unavailable:', error?.message || error)
@@ -384,6 +387,7 @@ function App() {
 
   return (
     <div className="page-shell">
+      <link rel="preload" as="video" href={heroVideoSource} type="video/mp4" />
       <header className={`topbar ${navScrolled ? 'scrolled' : ''}`}>
         <div className="brand-block">
           <span className="brand-name">FARHAD</span>
@@ -420,6 +424,7 @@ function App() {
                 loop
                 playsInline
                 preload="auto"
+                poster={heroVideoPoster}
                 aria-label="Farhad Global Trade sourcing and supply video"
                 onPlay={() => setVideoPlaying(true)}
                 onPause={() => setVideoPlaying(false)}
@@ -518,9 +523,7 @@ function App() {
             </div>
 
             <div className="why-farhad-video-shell">
-              <video ref={businessVideoRef} className="why-farhad-video" autoPlay muted loop playsInline preload="metadata" poster="/media/farhad-global-trade-business-poster.jpg" aria-label="Farhad Global Trade business video">
-                <source src={businessVideoSource} type="video/mp4" />
-              </video>
+              <video ref={businessVideoRef} className="why-farhad-video" autoPlay muted loop playsInline preload="none" poster="/media/farhad-global-trade-business-poster.jpg" aria-label="Farhad Global Trade business video" />
             </div>
           </div>
         </section>

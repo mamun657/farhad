@@ -244,30 +244,32 @@ function Chatbot() {
             <button type="button" className="chatbot-close" onClick={() => setIsOpen(false)} aria-label="Close chat">&times;</button>
           </header>
 
-          <div className="chatbot-messages" role="log" aria-label="Conversation">
-            {messages.map((message) => (
-              <div className={`chatbot-message-row ${message.role}`} key={message.id}>
-                <div className="chatbot-message">
-                  {message.content}
-                  {message.action && (
-                    <a className="chatbot-action" href={message.action.href} target={message.action.external ? '_blank' : undefined} rel={message.action.external ? 'noopener noreferrer' : undefined} onClick={(event) => handleNavigationActionClick(event, message.action)}>{message.action.label} <span aria-hidden="true">&rarr;</span></a>
-                  )}
+          <div className="chatbot-content">
+            <div className="chatbot-messages" role="log" aria-label="Conversation">
+              {messages.map((message) => (
+                <div className={`chatbot-message-row ${message.role}`} key={message.id}>
+                  <div className="chatbot-message">
+                    {message.content}
+                    {message.action && (
+                      <a className="chatbot-action" href={message.action.href} target={message.action.external ? '_blank' : undefined} rel={message.action.external ? 'noopener noreferrer' : undefined} onClick={(event) => handleNavigationActionClick(event, message.action)}>{message.action.label} <span aria-hidden="true">&rarr;</span></a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-            {isLoading && <div className="chatbot-message-row assistant"><div className="chatbot-message chatbot-thinking">{isConnecting && <span className="chatbot-connecting">Connecting to the business assistant...</span>}<span /> <span /> <span /></div></div>}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="chatbot-suggestions">
-            <div className={`chatbot-quick-questions ${showQuickReplies ? 'is-visible' : ''}`} aria-label="Suggested questions" aria-hidden={!showQuickReplies}>
-              {quickQuestions.map((question) => (
-                <button type="button" key={question} onClick={() => sendMessage(question)} tabIndex={showQuickReplies ? 0 : -1} disabled={!showQuickReplies}>{question}</button>
               ))}
+              {isLoading && <div className="chatbot-message-row assistant"><div className="chatbot-message chatbot-thinking">{isConnecting && <span className="chatbot-connecting">Connecting to the business assistant...</span>}<span /> <span /> <span /></div></div>}
+              <div ref={messagesEndRef} />
             </div>
-            <button type="button" className="chatbot-hint-toggle" onClick={() => setShowQuickReplies((current) => !current)} aria-label={showQuickReplies ? 'Hide suggested questions' : 'Show suggested questions'} aria-expanded={showQuickReplies}>
-              <span aria-hidden="true">✦</span>
-            </button>
+
+            <div className="chatbot-suggestions">
+              <div className={`chatbot-quick-questions ${showQuickReplies ? 'is-visible' : ''}`} aria-label="Suggested questions" aria-hidden={!showQuickReplies}>
+                {quickQuestions.map((question) => (
+                  <button type="button" key={question} onClick={() => sendMessage(question)} tabIndex={showQuickReplies ? 0 : -1} disabled={!showQuickReplies}>{question}</button>
+                ))}
+              </div>
+              <button type="button" className="chatbot-hint-toggle" onClick={() => setShowQuickReplies((current) => !current)} aria-label={showQuickReplies ? 'Hide suggested questions' : 'Show suggested questions'} aria-expanded={showQuickReplies}>
+                <span aria-hidden="true">✦</span>
+              </button>
+            </div>
           </div>
 
           <form className="chatbot-input-area" onSubmit={handleSubmit}>
